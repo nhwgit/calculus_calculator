@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>201914124 노현우 계산기</title>
+	<meta name="author" content="노현우">
+	<meta name="description" content="계산기">
+	<meta name="keywords" content="노현우, 2020, 계산기, 미분, 적분">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-score=1.0">
+
+	<script>
+	var exptmp;
+	var hisCount=1; // 계산 기록 count
+		function backward() {
+			var exp = document.getElementById("exp");
+			var len = exp.value.length;
+			if(len == 0)
+				return;
+			else
+				exp.value = exp.value.substr(0, len-1);
+		}
+
+		function clearexp(value) { // 결과CE, 기록CE, 입력CE 처리
+			if(value=="결과CE") {
+				var expResult = document.getElementById("expResult");
+				expResult.value = "0";
+			}
+			else if(value=="기록CE") {
+				var his = document.getElementById("history");
+				his.innerHTML = "계산 기록";
+				hiscount=1;
+			}
+			else {
+			var exp = document.getElementById("exp");
+			exp.value = "0";
+			}
+		}
+
+		function addInput(value) {
+			var exp = document.getElementById("exp");
+			if(exp.value == "입력")
+				exp.value = value;
+			else
+				exp.value += value;
+
+		}
+		function calHistory(num, a, b) { // 계산기록
+			var his = document.getElementById("history");
+			his.innerHTML+="<br>"+hisCount+". "
+			if(num==0) {
+				his.innerHTML+=exp.value+"="+expResult.value;
+			}
+			if(num==1) {
+				his.innerHTML+="f(x)="+exp.value+", ";
+				his.innerHTML+="f("+a+")="+expResult.value;
+			}
+			if(num==2) {
+				his.innerHTML+="f(x)="+exp.value+", ";
+				his.innerHTML+="f'("+a+")="+expResult.value;
+			}
+			if(num==3) {
+				his.innerHTML+="f(x)="+exp.value+", ";
+				his.innerHTML+="&#8747<span class=integral><sub>"+a+"</sub><sup>"+b+"</sup></span> f(x)dx="+expResult.value;
+			}
+			hisCount++;
+		}
+
+		function errorcatch() { // 잘못된 식에 대한 예외처리
+			alert("잘못된 식을 입력 하셨습니다.")
+			expResult.value = "잘못된 식을 입력 하셨습니다."
+		}
+
+		function calulate() {
+			try {
+			var exp = document.getElementById("exp");
+			transform(0);
+			expResult.value = eval(exptmp);
+			calHistory(0, 0, 0);
+			}
+			catch(e) {
+				errorcatch();
+			}
+		}
+
+		function transform(num) { //식 변환
+			var exp = document.getElementById("exp");
+			exptmp = exp.value.replace(/\^/g, "**");
+			if(num==1) {
+			exptmp = exptmp.replace(/x([\(e])/g, "x*$1"); // xe^x꼴, x()꼴
+			exptmp = exptmp.replace(/([\d\)])x/g, "$1*x"); // 2x, )x꼴
+			exptmp = exptmp.replace(/([\)])([\de])/g, "$1*$2"); // )\d꼴
+			exptmp = exptmp.replace(/([\)])\(/g, "$1*(") // ()*()
+			exptmp = exptmp.replace(/([x])\*\*/g, "($1)**"); // 음수 제곱 처리
+			}
+			exptmp = exptmp.replace(/e/g, "2.718282");
+		}
+
+		function substitude(num) { // 문자를 숫자로 치환
+			var exp2 = exptmp.replace(/x/g, num);
+			return eval(exp2);
+		}
+
+		function insert_function() { // 대입
+			try {
+			transform(1);
+			var point = parseFloat(prompt("대입할 값을 입력하세요.", ""))
+			var result = substitude(point)
+			expResult.value = "약 " + result.toFixed(2);
+			//alert(point + "에서의" + exp.value + "함수값 : 약" + result.toFixed(2));
+			calHistory(1, point, 0);
+			}
+			catch(e) {
+					errorcatch();
+			}
+		}
+
+		function diff_function() { // 미분계수
+			try {
+			transform(1);
+			var point = parseFloat(prompt("도함수의 함수값을 입력하세요.", ""))
+			var dx=0.000001;
+			var dy=substitude(point+dx)-substitude(point);
+			var result = dy/dx;
+			expResult.value = "약 " + result.toFixed(2);
+			//alert(point + "에서의" + exp.value + "미분계수값 : 약" + result.toFixed(2));
+			calHistory(2, point, 0);
+			}
+			catch(e) {
+				errorcatch();
+			}
+		}
+
+		function int_function() { // 정적분
+			try {
+			transform(1); // 제곱, e, 괄호 관련 식 변환
+			var start = parseFloat(prompt("구간의 시작을 입력하세요", ""));
+			var end = parseFloat(prompt("구간의 끝을 입력하세요", ""));
+			var dx = (end-start)/20000; // 증분
+			var k, sum=0;
+			for(k=start; k<end; k+=dx) { // summation [(start+k*dx)*f(start+k*dx)]
+				sum += dx*substitude(k);
+			}
+			expResult.value = "약 " + sum.toFixed(2);
+			//alert(start + "부터" + end +"까지의" + exp.value + "정적분값 : 약" + sum.toFixed(2));
+			calHistory(3, start, end);
+			}
+			catch(e) {
+				errorcatch();
+			}
+		}
+
+	</script>
+	<style>
+		tr {
+			text-align : center;
+		}
+		table table td {
+			width : 85px;
+			height : 30px;
+		}
+		.exp {
+			background-color : yellow;
+		}
+
+		.symbol {
+			background-color : skyblue;
+		}
+
+		.cal {
+			background-color : pink
+		}
+
+		input[type=button] {
+			width : 70px;
+			height : 25px;
+			border-radius : 50px;
+		}
+		input[type=button]:hover {
+			width : 80px;
+			height : 28px;
+		}
+
+		input[type=text]:focus {
+			background : aliceblue;
+		}
+		body {
+			background-color : gray;
+		}
+		div {
+			height : 330px;
+			width : 500px;
+			background-color : white;
+			text-align : justify;
+		}
+		span.integral {
+			position : relative;
+		}
+		span.integral sub {
+			position: absolute;
+			left : 0px;
+			bottom : -4px;
+		}
+
+	</style>
+</head>
+<body>
+	<h3>201914124 노현우 계산기</h3>
+	<hr>
+	<script>
+	</script>
+	<table border="0"> <tr><td>
+		<form>
+			<table border="1">
+				<tr>
+					<td colspan="4"><input type="text" id="exp" value="입력" size="45"></td>
+				</tr>
+				<tr>
+					<td colspan="4"><input type="text" id="expResult" value="결과" size="45"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="back" value="BACK" onclick="backward()"></td>
+					<td><input type="button" id="inputCE" value="입력CE" onclick="clearexp(this.value)"></td>
+					<td><input type="button" id="resultCE" value="결과CE" onclick="clearexp(this.value)"></td>
+					<td><input type="button" id="historyCE" value="기록CE" onclick="clearexp(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="seven" value="7" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="eight" value="8" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="nine" value="9" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="div" value="+" class="exp" onclick="addInput(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="four" value="4" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="five" value="5" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="six" value="6" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="minus" value="-" class="exp" onclick="addInput(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="one" value="1" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="two" value="2" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="three" value="3" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="mul" value="*" class="exp" onclick="addInput(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="zero" value="0" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="left_bracket" value="(" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="right_bracket" value=")" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="div" value="/" class="exp"  onclick="addInput(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="dot" value="소수점" onclick="addInput('.')"></td>
+					<td><input type="button" id="x" value="x" class="symbol" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="e" value="e" class="symbol" onclick="addInput(this.value)"></td>
+					<td><input type="button" id="square" value="^" class="exp" onclick="addInput(this.value)"></td>
+				</tr>
+				<tr>
+					<td><input type="button" id="dif" value="대입" class="cal" onclick="insert_function()"></td>
+					<td><input type="button" id="dif" value="미분계수" class="cal" onclick="diff_function()"></td>
+					<td><input type="button" id="integral" value="정적분" class="cal" onclick="int_function()"></td>
+					<td><input type="button" id="equal" value="=" class="cal" onclick="calulate()"></td>
+				</tr>
+			</table>
+		</form> </td>
+		<td> <div id="history">계산 기록</div></td> <tr>
+</body>
+</html>
